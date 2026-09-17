@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A neon anime-inspired multi-time-zone digital clock." />
+  <title>Chrono Nexus — World Clock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="aurora aurora-one"></div>
+  <div class="aurora aurora-two"></div>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">◈</span><span>CHRONO <em>NEXUS</em></span></div>
+      <button class="icon-button" id="themeToggle" type="button" aria-label="Toggle theme">☼</button>
+    </header>
+
+    <section class="hero">
+      <p class="eyebrow">// TEMPORAL NETWORK ONLINE</p>
+      <h1>Worlds apart.<br /><span>One moment.</span></h1>
+      <p class="hero-copy">Track the pulse of the planet with a cyber-anime command center for every time zone.</p>
+      <div class="controls">
+        <button class="primary-button" id="formatToggle" type="button">24H FORMAT</button>
+        <label class="search-box"><span>⌕</span><input id="zoneSearch" type="search" placeholder="Search a time zone..." /></label>
+      </div>
+    </section>
+
+    <section class="clock-grid" id="clockGrid" aria-live="polite"></section>
+
+    <section class="add-panel">
+      <div><p class="eyebrow">// EXPAND THE NETWORK</p><h2>Add a time zone</h2></div>
+      <div class="add-controls"><select id="zoneSelect" aria-label="Choose a time zone"></select><button class="primary-button" id="addZone" type="button">+ ADD ZONE</button></div>
+    </section>
+
+    <footer><span>CHRONO NEXUS v1.0</span><span id="syncStatus">SYNCING...</span><span>MADE FOR NIGHT OWLS ✦</span></footer>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
