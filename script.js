@@ -1,37 +1,35 @@
-const defaultZones = ['Asia/Tokyo', 'America/New_York', 'Europe/London', 'Australia/Sydney'];
-const zoneNames = {
-  'Asia/Tokyo': 'Tokyo', 'America/New_York': 'New York', 'Europe/London': 'London', 'Australia/Sydney': 'Sydney',
-  'Europe/Paris': 'Paris', 'Asia/Kolkata': 'Mumbai', 'Asia/Seoul': 'Seoul', 'America/Los_Angeles': 'Los Angeles',
-  'America/Sao_Paulo': 'São Paulo', 'Africa/Cairo': 'Cairo', 'Pacific/Auckland': 'Auckland', 'Asia/Singapore': 'Singapore'
-};
-let zones = JSON.parse(localStorage.getItem('chrono-zones') || 'null') || defaultZones;
-let hour12 = localStorage.getItem('chrono-format') === '12';
-const grid = document.querySelector('#clockGrid');
-const select = document.querySelector('#zoneSelect');
-const formatButton = document.querySelector('#formatToggle');
-const search = document.querySelector('#zoneSearch');
+const API = 'https://v2.jokeapi.dev/joke/';
+let currentJoke = null;
+let count = Number(localStorage.getItem('laugh-count') || 0);
+let favorites = JSON.parse(localStorage.getItem('laugh-favorites') || '[]');
+const $ = selector => document.querySelector(selector);
+const card = $('#jokeCard');
 
-function save() { localStorage.setItem('chrono-zones', JSON.stringify(zones)); localStorage.setItem('chrono-format', hour12 ? '12' : '24'); }
-function city(zone) { return zoneNames[zone] || zone.split('/').pop().replaceAll('_', ' '); }
-function offset(zone, date) { const parts = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'longOffset' }).formatToParts(date); return parts.find(p => p.type === 'timeZoneName')?.value.replace('GMT', 'UTC') || 'UTC'; }
-function render() {
-  const term = search.value.toLowerCase();
-  grid.innerHTML = zones.filter(z => city(z).toLowerCase().includes(term) || z.toLowerCase().includes(term)).map((zone, index) => `
-    <article class="clock-card"><div class="card-top"><span class="city">${city(zone)}</span><button class="remove" data-index="${index}" aria-label="Remove ${city(zone)}">×</button></div>
-    <div class="time" data-zone="${zone}">--:--:<span class="seconds">--</span></div><div class="date" data-date-zone="${zone}">Loading date...</div><span class="offset" data-offset-zone="${zone}">${offset(zone, new Date())}</span></article>`).join('') || '<p>No matching zones found.</p>';
-  document.querySelectorAll('.remove').forEach(btn => btn.onclick = () => { zones.splice(Number(btn.dataset.index), 1); save(); render(); });
-  updateTimes();
+async function generateJoke() {
+  card.classList.add('loading'); $('#error').textContent = '';
+  const category = $('#category').value;
+  const safe = $('#safeMode').checked ? '&safe-mode' : '';
+  try {
+    const response = await fetch(`${API}${encodeURIComponent(category)}?type=single,twopart${safe}&blacklistFlags=nsfw,religious,political,racist,sexist,explicit`);
+    if (!response.ok) throw new Error('The comedy relay is unavailable.');
+    const data = await response.json();
+    if (data.error) throw new Error(data.message || 'No joke found in this channel.');
+    currentJoke = { setup: data.type === 'single' ? data.joke : data.setup, delivery: data.type === 'single' ? '' : data.delivery, category: data.category };
+    count += 1; localStorage.setItem('laugh-count', count); renderJoke();
+  } catch (error) { $('#error').textContent = `${error.message} Try again in a moment.`; }
+  finally { card.classList.remove('loading'); }
 }
-function updateTimes() {
-  const now = new Date();
-  document.querySelectorAll('[data-zone]').forEach(el => { const parts = new Intl.DateTimeFormat('en-GB', { timeZone: el.dataset.zone, hour:'2-digit', minute:'2-digit', second:'2-digit', hour12 }).formatToParts(now); const get = type => parts.find(p => p.type === type)?.value || ''; el.innerHTML = `${get('hour')}:${get('minute')}:<span class="seconds">${get('second')}</span>${hour12 ? ` ${get('dayPeriod')}` : ''}`; });
-  document.querySelectorAll('[data-date-zone]').forEach(el => el.textContent = new Intl.DateTimeFormat('en-US', { timeZone:el.dataset.dateZone, weekday:'long', month:'short', day:'numeric', year:'numeric' }).format(now));
-  document.querySelectorAll('[data-offset-zone]').forEach(el => el.textContent = offset(el.dataset.offsetZone, now));
-  document.querySelector('#syncStatus').textContent = `SYNCED ${now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
+function renderJoke() {
+  $('#jokeNumber').textContent = `#${String(count).padStart(4, '0')}`;
+  $('#jokeContent').innerHTML = `<p class="setup">${escapeHtml(currentJoke.setup)}</p>${currentJoke.delivery ? `<p class="delivery">${escapeHtml(currentJoke.delivery)}</p>` : ''}`;
+  $('#favoriteButton').classList.toggle('active', favorites.some(j => j.setup === currentJoke.setup));
 }
-function populate() { Object.keys(zoneNames).sort().forEach(zone => { if (!zones.includes(zone)) { const option = document.createElement('option'); option.value=zone; option.textContent=`${city(zone)} — ${zone}`; select.append(option); } }); }
-formatButton.onclick = () => { hour12 = !hour12; formatButton.textContent = hour12 ? '12H FORMAT' : '24H FORMAT'; save(); updateTimes(); };
-document.querySelector('#addZone').onclick = () => { if (select.value) { zones.push(select.value); populate(); save(); render(); } };
-search.oninput = render;
-document.querySelector('#themeToggle').onclick = () => document.body.classList.toggle('light');
-formatButton.textContent = hour12 ? '12H FORMAT' : '24H FORMAT'; populate(); render(); setInterval(updateTimes, 1000);
+function escapeHtml(value) { const div = document.createElement('div'); div.textContent = value; return div.innerHTML; }
+function renderFavorites() { $('#favorites').innerHTML = favorites.length ? favorites.map((j, i) => `<button class="favorite-item" data-index="${i}" type="button">${escapeHtml(j.setup)}${j.delivery ? ` — ${escapeHtml(j.delivery)}` : ''}</button>`).join('') : '<p>No saved jokes yet. Find one worth keeping.</p>'; document.querySelectorAll('.favorite-item').forEach(el => el.onclick = () => { currentJoke = favorites[el.dataset.index]; renderJoke(); }); }
+$('#newJoke').onclick = generateJoke;
+$('#safeMode').onchange = generateJoke;
+$('#category').onchange = generateJoke;
+$('#copyButton').onclick = async () => { if (!currentJoke) return; await navigator.clipboard.writeText([currentJoke.setup, currentJoke.delivery].filter(Boolean).join('\n')); $('#copyButton').textContent = '✓ COPIED'; setTimeout(() => $('#copyButton').textContent = '▣ COPY', 1400); };
+$('#favoriteButton').onclick = () => { if (!currentJoke) return; const found = favorites.findIndex(j => j.setup === currentJoke.setup); found >= 0 ? favorites.splice(found, 1) : favorites.unshift(currentJoke); localStorage.setItem('laugh-favorites', JSON.stringify(favorites)); renderJoke(); renderFavorites(); };
+document.addEventListener('keydown', event => { if (event.key === 'Enter' && document.activeElement.tagName !== 'SELECT') generateJoke(); });
+renderFavorites(); generateJoke();

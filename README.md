@@ -1,48 +1,52 @@
-# ◈ Chrono Nexus
+# ✦ Laugh Nexus
 
-> A neon anime-inspired digital clock for the whole planet.
+> A cyber-anime random joke generator powered by an external API.
 
-![Chrono Nexus](https://img.shields.io/badge/CHRONO-NEXUS-ff4fc4?style=for-the-badge&labelColor=080b18)
-![Vanilla JS](https://img.shields.io/badge/JavaScript-Vanilla-f7df1e?style=for-the-badge&logo=javascript&logoColor=111)
-![License](https://img.shields.io/badge/license-MIT-57e5ff?style=for-the-badge)
+![Laugh Nexus](https://img.shields.io/badge/LAUGH-NEXUS-ff4fc4?style=for-the-badge&labelColor=090b18)
+![API](https://img.shields.io/badge/API-JokeAPI-51e6ff?style=for-the-badge)
+![License](https://img.shields.io/badge/license-MIT-f4df69?style=for-the-badge)
 
-Chrono Nexus is a zero-dependency world clock dashboard with a cyberpunk anime aesthetic. It uses the browser's native `Intl.DateTimeFormat` API, so daylight-saving changes and time-zone offsets stay accurate automatically.
+Laugh Nexus pulls fresh jokes from [JokeAPI](https://jokeapi.dev/) and presents them in a neon anime-inspired interface. It is a lightweight, dependency-free frontend that runs directly in the browser.
 
 ## Features
 
-- Live clocks that update every second
-- Tokyo, New York, London, and Sydney included by default
-- Add and remove locations from the network
-- Search through cities and IANA time zones
-- One-click 12-hour / 24-hour formatting
-- Light/dark theme toggle
-- Persistent locations and format preference with `localStorage`
-- Responsive glassmorphism UI with neon animations
-- No build step, backend, or API key required
+- Random jokes from an external API using `fetch`
+- Single-line and two-part jokes
+- Category filters: Any, Programming, Misc, Dark, Pun, Spooky, and Christmas
+- Safe mode with offensive-content blacklist flags
+- Copy jokes to the clipboard
+- Save favorite jokes locally
+- Keyboard shortcut: press `Enter` to generate
+- Loading state and friendly API error handling
+- Responsive neon UI with transmission counter
+- No build step or API key required
 
-## Launch locally
+## Run locally
 
 ```bash
 git clone https://github.com/sifatyt20c-lang/anime-character-generator.git
 cd anime-character-generator
-```
-
-Open `index.html` in a browser, or run any static server:
-
-```bash
 python3 -m http.server 8080
 ```
 
-Then visit `http://localhost:8080`.
+Open `http://localhost:8080` in your browser. You can also open `index.html` directly, although a local server is recommended for consistent browser behavior.
 
-## Advanced function
+## API integration
 
-The dashboard uses the IANA time-zone database built into modern browsers through `Intl.DateTimeFormat`. This means each clock calculates its own local time and UTC offset independently rather than applying a fragile fixed-hour offset. The same approach correctly handles daylight-saving transitions.
+The app requests jokes from:
 
-## Customize
+```text
+https://v2.jokeapi.dev/joke/{category}?type=single,twopart&safe-mode
+```
 
-Add more locations to the `zoneNames` object in `script.js`. Any valid IANA time zone such as `Europe/Berlin` or `America/Chicago` will work.
+The browser's `fetch` API handles the request, while the UI checks both HTTP failures and JokeAPI's JSON `error` field. Jokes are escaped before rendering to prevent API-provided text from becoming HTML.
+
+## Project files
+
+- `index.html` — accessible application structure
+- `style.css` — responsive neon visual system
+- `script.js` — API calls, filtering, favorites, clipboard, and state
 
 ## License
 
-MIT © Chrono Nexus contributors
+MIT. Joke content is provided by JokeAPI under its own terms.
